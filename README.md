@@ -1,2 +1,2 @@
 # game1
-test
+this is test there sume errors
