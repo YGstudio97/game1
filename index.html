@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy Blast</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            overflow: hidden;
+            background-size: cover;
+            position: relative;
+        }
+
+        #home-screen, #game-screen, #settings-screen, #how-to-play {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+        }
+
+        #home-screen h1, #settings-screen h2, #how-to-play h3 {
+            color: #fff;
+            font-size: 50px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            margin: 0 0 15px;
+        }
+
+        #game-screen h2 {
+            color: #fff;
+            font-size: 24px;
+            margin: 0 0 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #game-board {
+            display: grid;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .candy {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            background-size: cover;
+        }
+
+        .candy.striped {
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.5) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.5) 75%, transparent 75%, transparent);
+        }
+
+        .candy.wrapped {
+            border: 3px solid #fff;
+            border-radius: 50%;
+        }
+
+        .candy:hover {
+            transform: scale(1.1);
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background: #fff;
+            border-radius: 10px;
+            margin: 10px auto;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6a00, #ee0979);
+            transition: width 0.5s ease;
+        }
+
+        button, input[type="color"], input[type="file"] {
+            padding: 12px 25px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #ff6a00, #ee0979);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="color"] {
+            padding: 5px;
+            width: 50px;
+        }
+
+        button:hover, input[type="color"]:hover, input[type="file"]:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(238, 9, 121, 0.6);
+        }
+
+        #settings-screen p, #how-to-play p {
+            color: #fff;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        #how-to-play {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+        }
+
+        #watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="home-screen">
+        <h1>Candy Blast</h1>
+        <button id="start-button">Start Game</button>
+        <button id="settings-button">Settings</button>
+        <button id="exit-button">Exit</button>
+    </div>
+    <div id="game-screen" class="hidden">
+        <h2>Level: <span id="level">1</span> | Points: <span id="points">0</span> | Goal: Clear <span id="target">20</span> candies</h2>
+        <div id="game-board"></div>
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+        <button id="skip-button">Skip (-10 Points)</button>
+        <button id="restart-button">Restart</button>
+    </div>
+    <div id="settings-screen" class="hidden">
+        <h2>Settings</h2>
+        <p>Customize Candy Colors:</p>
+        <input type="color" id="color1" value="#FF6347">
+        <input type="color" id="color2" value="#FFD700">
+        <input type="color" id="color3" value="#00CED1">
+        <input type="color" id="color4" value="#FF69B4">
+        <input type="color" id="color5" value="#32CD32">
+        <p>Upload Background Image:</p>
+        <input type="file" id="bg-upload" accept="image/*">
+        <button id="apply-settings">Apply Settings</button>
+        <button id="how-to-play-button">How to Play</button>
+        <p>Last Game: <span id="last-levels">0</span> levels completed</p>
+        <p>Wins: <span id="wins">0</span></p>
+        <p>Total Points: <span id="total-points">0</span></p>
+        <button id="back-button">Back</button>
+    </div>
+    <div id="how-to-play" class="hidden">
+        <h3>How to Play</h3>
+        <p>Click groups of 3 to 10 adjacent candies of the same color to clear them.</p>
+        <p>Clear the target number of candies to advance levels (infinite).</p>
+        <p>Special candies: Striped (+15 bonus), Wrapped (+15 bonus).</p>
+        <p>Use "Skip" (-10 points) to move to the next level if you have at least 10 points.</p>
+        <p>Bonus: +5 points per level!</p>
+        <button id="close-how-to-play">Close</button>
+    </div>
+    <div id="watermark">Created by Ygstudio97</div>
+    <script>
+        const homeScreen = document.getElementById('home-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const settingsScreen = document.getElementById('settings-screen');
+        const howToPlayScreen = document.getElementById('how-to-play');
+        const startButton = document.getElementById('start-button');
+        const settingsButton = document.getElementById('settings-button');
+        const exitButton = document.getElementById('exit-button');
+        const restartButton = document.getElementById('restart-button');
+        const skipButton = document.getElementById('skip-button');
+        const applySettingsButton = document.getElementById('apply-settings');
+        const howToPlayButton = document.getElementById('how-to-play-button');
+        const closeHowToPlayButton = document.getElementById('close-how-to-play');
+        const backButton = document.getElementById('back-button');
+        const levelDisplay = document.getElementById('level');
+        const pointsDisplay = document.getElementById('points');
+        const targetDisplay = document.getElementById('target');
+        const gameBoard = document.getElementById('game-board');
+        const progressBar = document.getElementById('progress');
+        const lastLevelsDisplay = document.getElementById('last-levels');
+        const winsDisplay = document.getElementById('wins');
+        const totalPointsDisplay = document.getElementById('total-points');
+        const colorInputs = [document.getElementById('color1'), document.getElementById('color2'), document.getElementById('color3'), document.getElementById('color4'), document.getElementById('color5')];
+        const bgUpload = document.getElementById('bg-upload');
+
+        let level = 1;
+        const minLevel = 1;
+        let gridSize = 5;
+        let board = [];
+        let points = 0;
+        let targetCandies = 20;
+        let clearedCandies = 0;
+        let lastLevelsCompleted = 0;
+        let wins = 0;
+        let totalPoints = 0;
+        let colors = ['#FF6347', '#FFD700', '#00CED1', '#FF69B4', '#32CD32'];
+        let pendingColors = [...colors];
+        let pendingBgImage = null;
+
+        // Sound effects
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(frequency, duration) {
+            const oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            oscillator.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        startButton.addEventListener('click', startGame);
+        settingsButton.addEventListener('click', showSettings);
+        exitButton.addEventListener('click', () => window.close());
+        restartButton.addEventListener('click', restartGame);
+        skipButton.addEventListener('click', skipLevel);
+        applySettingsButton.addEventListener('click', applySettings);
+        howToPlayButton.addEventListener('click', showHowToPlay);
+        closeHowToPlayButton.addEventListener('click', () => howToPlayScreen.classList.add('hidden'));
+        backButton.addEventListener('click', () => {
+            settingsScreen.classList.add('hidden');
+            homeScreen.classList.remove('hidden');
+        });
+
+        colorInputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                pendingColors[index] = input.value;
+            });
+        });
+
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    pendingBgImage = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function applySettings() {
+            colors = [...pendingColors];
+            if (pendingBgImage) {
+                document.body.style.background = `url(${pendingBgImage}) no-repeat center center`;
+                document.body.style.backgroundSize = 'cover';
+            }
+            if (!gameScreen.classList.contains('hidden')) setupLevel();
+        }
+
+        function startGame() {
+            homeScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            setupLevel();
+        }
+
+        function showSettings() {
+            homeScreen.classList.add('hidden');
+            settingsScreen.classList.remove('hidden');
+            lastLevelsDisplay.textContent = lastLevelsCompleted;
+            winsDisplay.textContent = wins;
+            totalPointsDisplay.textContent = totalPoints;
+            colorInputs.forEach((input, index) => input.value = colors[index]);
+        }
+
+        function showHowToPlay() {
+            howToPlayScreen.classList.remove('hidden');
+        }
+
+        function setupLevel() {
+            levelDisplay.textContent = level;
+            pointsDisplay.textContent = points;
+            targetCandies = 20 + level * 5;
+            targetDisplay.textContent = targetCandies;
+            clearedCandies = 0;
+            gridSize = Math.min(10, 5 + Math.floor((level - 1) / 10));
+            updateProgress();
+            gameBoard.style.gridTemplateColumns = `repeat(${gridSize}, 50px)`;
+            gameBoard.innerHTML = '';
+            board = [];
+
+            for (let i = 0; i < gridSize; i++) {
+                board[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    const rand = Math.random();
+                    let type = rand < 0.05 ? 'striped' : rand < 0.10 ? 'wrapped' : 'normal';
+                    board[i][j] = { color: Math.floor(Math.random() * colors.length), type };
+                    const candy = document.createElement('div');
+                    candy.classList.add('candy');
+                    if (type !== 'normal') candy.classList.add(type);
+                    candy.style.backgroundColor = colors[board[i][j].color];
+                    candy.dataset.x = i;
+                    candy.dataset.y = j;
+                    candy.addEventListener('click', () => handleClick(i, j));
+                    gameBoard.appendChild(candy);
+                }
+            }
+        }
+
+        function handleClick(x, y) {
+            const group = findGroup(x, y, board[x][y].color, []);
+            if (group.length >= 3 && group.length <= 10) {
+                playSound(660, 0.1);
+                let special = board[x][y].type;
+                group.forEach(([gx, gy]) => {
+                    const candy = gameBoard.children[gx * gridSize + gy];
+                    candy.style.opacity = '0';
+                    setTimeout(() => {
+                        board[gx][gy] = { color: -1, type: 'normal' };
+                        dropCandies();
+                    }, 300);
+                });
+                clearedCandies += group.length;
+                points += group.length * (level + 5);
+                if (special === 'striped') points += 15;
+                if (special === 'wrapped') points += 15;
+                pointsDisplay.textContent = points;
+                updateProgress();
+                if (clearedCandies >= targetCandies) levelUp();
+            } else if (group.length > 10) {
+                alert('Group too large! Max 10 candies per click.');
+            }
+        }
+
+        function findGroup(x, y, color, visited) {
+            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || board[x][y].color !== color || visited.some(([vx, vy]) => vx === x && vy === y)) {
+                return [];
+            }
+            visited.push([x, y]);
+            return [
+                [x, y],
+                ...findGroup(x + 1, y, color, visited),
+                ...findGroup(x - 1, y, color, visited),
+                ...findGroup(x, y + 1, color, visited),
+                ...findGroup(x, y - 1, color, visited)
+            ];
+        }
+
+        function dropCandies() {
+            for (let j = 0; j < gridSize; j++) {
+                for (let i = gridSize - 1; i >= 0; i--) {
+                    if (board[i][j].color === -1) {
+                        for (let k = i - 1; k >= 0; k--) {
+                            if (board[k][j].color !== -1) {
+                                board[i][j] = board[k][j];
+                                board[k][j] = { color: -1, type: 'normal' };
+                                break;
+                            }
+                        }
+                        if (board[i][j].color === -1) {
+                            const rand = Math.random();
+                            board[i][j] = { color: Math.floor(Math.random() * colors.length), type: rand < 0.05 ? 'striped' : rand < 0.10 ? 'wrapped' : 'normal' };
+                        }
+                    }
+                }
+            }
+            updateBoard();
+        }
+
+        function updateBoard() {
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const candy = gameBoard.children[i * gridSize + j];
+                    candy.style.backgroundColor = colors[board[i][j].color];
+                    candy.className = 'candy';
+                    if (board[i][j].type !== 'normal') candy.classList.add(board[i][j].type);
+                    candy.style.opacity = '1';
+                }
+            }
+        }
+
+        function updateProgress() {
+            progressBar.style.width = `${Math.min((clearedCandies / targetCandies) * 100, 100)}%`;
+        }
+
+        function levelUp() {
+            playSound(880, 0.2);
+            points += 5; // 5-point bonus for leveling up
+            totalPoints += 5;
+            lastLevelsCompleted++;
+            pointsDisplay.textContent = points;
+            level++;
+            setupLevel();
+        }
+
+        function skipLevel() {
+            if (points >= 10) {
+                points -= 10; // Remove 10 points for skip
+                pointsDisplay.textContent = points;
+                playSound(440, 0.1);
+                levelUp();
+            } else {
+                alert('Minimum credit needed: 10');
+            }
+        }
+
+        function restartGame() {
+            level = minLevel;
+            points = 0;
+            homeScreen.classList.remove('hidden');
+            gameScreen.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
